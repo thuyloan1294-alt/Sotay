@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b3d33">
+<title>🌽 Kế toán doanh nghiệp</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kế toán 🌽">
+<style>
+:root{--green:#0b3d33;--green2:#176b52;--bg:#f4f7f5;--card:#fff;--ink:#182521;--muted:#687670;--border:#e1e9e5;--red:#b42318;--gold:#a15c00}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:84px}
+header{background:linear-gradient(140deg,var(--green),#20775b);color:#fff;padding:22px 18px 20px;border-radius:0 0 24px 24px}
+header h1{font-size:21px;margin:0 0 5px}header p{margin:0;color:#d4e9df;font-size:13px}
+main{padding:14px;max-width:800px;margin:auto}.period{display:flex;align-items:center;justify-content:space-between;margin:3px 0 12px}
+select,input,textarea{font:inherit;border:1px solid var(--border);background:#fff;border-radius:12px;padding:11px;width:100%;color:var(--ink}
+);outline-color:var(--green2)}.period select{width:auto;padding:8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;box-shadow:0 2px 6px #173b2a08}.metric small{color:var(--muted);display:block;font-size:12px}.metric strong{font-size:19px;display:block;margin-top:7px;word-break:break-word}.metric .sub{font-size:11px;color:var(--muted);margin-top:3px}
+.section{margin-top:14px}.section h2{font-size:16px;margin:4px 0 10px}.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.btn{border:0;border-radius:13px;padding:12px 9px;background:var(--green);color:#fff;font-weight:650;cursor:pointer}.btn.secondary{background:#e5f1eb;color:var(--green)}.btn.danger{background:#fff0ef;color:var(--red)}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr);padding:8px 4px max(8px,env(safe-area-inset-bottom));z-index:10}
+nav button{border:0;background:none;color:var(--muted);font-size:11px;padding:5px 1px;cursor:pointer}nav button.active{color:var(--green);font-weight:700}
+nav span{display:block;font-size:18px;margin-bottom:2px}
+.view{display:none}.view.active{display:block}
+.row{display:flex;gap:8px}.row>*{flex:1}
+label{display:block;font-size:12px;color:var(--muted);margin:9px 0 5px}
+.form-card{display:grid;gap:4px}
+.transaction{display:flex;justify-content:space-between;gap:8px;padding:11px 0;border-bottom:1px solid var(--border);font-size:13px}
+.transaction:last-child{border-bottom:0}.transaction .desc{font-weight:600}.transaction small{display:block;color:var(--muted);margin-top:3px}.positive{color:var(--green2);font-weight:700}.negative{color:var(--red);font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--border)}th{color:var(--muted);font-weight:600}
+.empty{text-align:center;color:var(--muted);padding:22px 10px;font-size:13px}
+.file{font-size:12px;color:var(--muted)}.notice{background:#fff7e6;border:1px solid #f2dbab;border-radius:12px;padding:11px;font-size:12px;color:#725000;margin-top:12px}
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:end;z-index:20}.modal.open{display:flex}.sheet{background:#fff;border-radius:20px 20px 0 0;padding:18px;width:100%;max-height:90vh;overflow:auto}.sheet h2{margin:0 0 12px;font-size:18px}.sheet .btn{width:100%;margin-top:10px}
+</style>
+</head>
+<body>
+<header><h1>🌽 Kế toán doanh nghiệp</h1><p>Quản lý thu chi · Hàng hóa · Giá vốn · Công nợ</p></header>
+<main>
+<div id="dashboard" class="view active">
+<div class="period"><strong>Tổng quan</strong><select id="monthFilter"></select></div>
+<div class="grid">
+<div class="card metric"><small>Doanh thu bán hàng</small><strong id="revenue">0 ₫</strong><div class="sub">Trong tháng đang chọn</div></div>
+<div class="card metric"><small>Chi phí đã ghi</small><strong id="expenses">0 ₫</strong><div class="sub">Không bao gồm giá vốn tự động</div></div>
+<div class="card metric"><small>Thu khác</small><strong id="otherIncome">0 ₫</strong></div>
+<div class="card metric"><small>Lãi tạm tính</small><strong id="profit">0 ₫</strong><div class="sub">Doanh thu − chi phí − giá vốn</div></div>
+</div>
+<div class="section card"><h2>Thao tác nhanh</h2><div class="actions"><button class="btn" onclick="openForm('income')">＋ Ghi thu</button><button class="btn secondary" onclick="openForm('expense')">－ Ghi chi</button><button class="btn secondary" onclick="openForm('purchase')">📦 Nhập hàng</button></div></div>
+<div class="section card"><h2>Giao dịch gần đây</h2><div id="recent"></div></div>
+<div class="notice">Bản thử nghiệm lưu dữ liệu trên thiết bị này. Hãy sao lưu thường xuyên ở mục Cài đặt. Báo cáo chưa thay thế sổ kế toán pháp định.</div>
+</div>
+<div id="transactions" class="view">
+<div class="section card"><h2>Thu chi</h2><div class="row"><select id="txnFilter"><option value="all">Tất cả</option><option value="income">Thu</option><option value="expense">Chi</option><option value="purchase">Nhập hàng</option></select><button class="btn secondary" onclick="openForm('income')">＋ Thêm</button></div><div id="txnList"></div></div>
+</div>
+<div id="inventory" class="view">
+<div class="section card"><h2>Kho hàng</h2><button class="btn" onclick="openProductForm()">＋ Thêm sản phẩm</button><div id="products"></div></div>
+<div class="section card"><h2>Nhập hàng</h2><button class="btn secondary" onclick="openForm('purchase')">＋ Tạo phiếu nhập</button><p class="file">Phiếu nhập cập nhật số lượng tồn và giá trị hàng.</p></div>
+</div>
+<div id="reports" class="view">
+<div class="section card"><h2>Báo cáo nhanh</h2><div id="reportContent"></div><button class="btn secondary" onclick="exportCSV()">Xuất CSV (Excel)</button></div>
+</div>
+<div id="settings" class="view">
+<div class="section card"><h2>Dữ liệu & sao lưu</h2><p class="file">Xuất tệp JSON để sao lưu. Khi đổi điện thoại, nhập tệp sao lưu vào app.</p><button class="btn" onclick="backup()">Tải bản sao lưu</button><label>Khôi phục dữ liệu từ JSON</label><input type="file" id="restoreFile" accept=".json,application/json"><button class="btn secondary" onclick="restore()">Khôi phục</button><button class="btn danger" style="margin-top:12px" onclick="clearData()">Xóa toàn bộ dữ liệu</button></div>
+<div class="section card"><h2>Ghi chú</h2><p style="font-size:13px">Phiên bản thử nghiệm 0.1. Giao dịch và sản phẩm lưu trong bộ nhớ trình duyệt. Chưa đồng bộ nhiều thiết bị, chưa kết nối hóa đơn điện tử hoặc kê khai thuế.</p></div>
+</div>
+</main>
+<nav>
+<button class="active" onclick="showView('dashboard',this)"><span>⌂</span>Tổng quan</button>
+<button onclick="showView('transactions',this)"><span>↕</span>Thu chi</button>
+<button onclick="showView('inventory',this)"><span>▦</span>Kho hàng</button>
+<button onclick="showView('reports',this)"><span>▤</span>Báo cáo</button>
+<button onclick="showView('settings',this)"><span>⚙</span>Cài đặt</button>
+</nav>
+<div id="modal" class="modal" onclick="if(event.target.id==='modal')closeModal()"><div class="sheet"><h2 id="formTitle"></h2><div id="formBody"></div><button class="btn" onclick="saveForm()">Lưu giao dịch</button><button class="btn secondary" onclick="closeModal()">Hủy</button></div></div>
+<script>
+const KEY='accounting_mini_v01';
+let data={transactions:[],products:[]};
+try{data=JSON.parse(localStorage.getItem(KEY))||data}catch(e){}
+const fmt=n=>new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0}).format(Number(n||0));
+const save=()=>localStorage.setItem(KEY,JSON.stringify(data));
+const nowDate=()=>new Date().toISOString().slice(0,10);
+function monthChoices(){let s=document.getElementById('monthFilter');let now=new Date();for(let i=0;i<18;i++){let d=new Date(now.getFullYear(),now.getMonth()-i,1),v=d.toISOString().slice(0,7);let o=document.createElement('option');o.value=v;o.textContent=`${d.getMonth()+1}/${d.getFullYear()}`;s.append(o)}s.value=now.toISOString().slice(0,7);s.onchange=render}
+function showView(id,btn){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');render()}
+function txMonth(){return data.transactions.filter(t=>t.date.startsWith(document.getElementById('monthFilter').value))}
+function render(){let m=txMonth(),rev=m.filter(t=>t.type==='income'&&t.category==='Bán hàng').reduce((s,t)=>s+t.amount,0),other=m.filter(t=>t.type==='income'&&t.category!=='Bán hàng').reduce((s,t)=>s+t.amount,0),exp=m.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),cost=m.filter(t=>t.type==='purchase').reduce((s,t)=>s+t.amount,0);
+document.getElementById('revenue').textContent=fmt(rev);document.getElementById('expenses').textContent=fmt(exp);document.getElementById('otherIncome').textContent=fmt(other);document.getElementById('profit').textContent=fmt(rev-exp-cost);
+let recent=[...data.transactions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);document.getElementById('recent').innerHTML=recent.length?recent.map(txHTML).join(''):'<div class="empty">Chưa có giao dịch</div>';
+let filt=document.getElementById('txnFilter').value;let list=[...data.transactions].sort((a,b)=>b.date.localeCompare(a.date)).filter(t=>filt==='all'||t.type===filt);document.getElementById('txnList').innerHTML=list.length?list.map(txHTML).join(''):'<div class="empty">Chưa có giao dịch</div>';
+document.getElementById('products').innerHTML=data.products.length?'<table><thead><tr><th>Sản phẩm</th><th>Tồn</th><th>Giá vốn</th><th>Giá trị</th></tr></thead><tbody>'+data.products.map(p=>`<tr><td>${esc(p.name)}<small>${esc(p.code||'')}</small></td><td>${p.qty}</td><td>${fmt(p.cost)}</td><td>${fmt(p.qty*p.cost)}</td></tr>`).join('')+'</tbody></table>':'<div class="empty">Chưa có sản phẩm</div>';
+document.getElementById('reportContent').innerHTML=`<p>Doanh thu: <b>${fmt(rev)}</b></p><p>Thu khác: <b>${fmt(other)}</b></p><p>Chi phí: <b>${fmt(exp)}</b></p><p>Nhập hàng (giá trị): <b>${fmt(cost)}</b></p><hr><p>Lãi tạm tính: <b>${fmt(rev-exp-cost)}</b></p><p>Số giao dịch: ${m.length}</p>`;
+}
+function txHTML(t){let label=t.type==='income'?'Thu':t.type==='expense'?'Chi':'Nhập hàng';return `<div class="transaction"><div><div class="desc">${esc(t.title||t.category)}</div><small>${t.date} · ${label}${t.note?' · '+esc(t.note):''}</small></div><div class="${t.type==='income'?'positive':'negative'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div></div>`}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+let currentType='income';
+function openForm(type){currentType=type;document.getElementById('formTitle').textContent=type==='income'?'Ghi khoản thu':type==='expense'?'Ghi khoản chi':'Phiếu nhập hàng';
+let cats=type==='income'?['Bán hàng','Thu khác','Thu công nợ']:type==='expense'?['Vận chuyển','Phí nhập khẩu','Thuế','Thuê mặt bằng','Điện nước','Phí nền tảng','Bảo hành','Chi khác']:['Nhập hàng Trung Quốc','Nhập hàng trong nước'];
+document.getElementById('formBody').innerHTML=`<label>Ngày</label><input id="fDate" type="date" value="${nowDate()}"><label>Danh mục</label><select id="fCat">${cats.map(c=>`<option>${c}</option>`).join('')}</select><label>Nội dung / mã hàng</label><input id="fTitle" placeholder="Ví dụ: Máy thổi 20 chiếc"><label>Số tiền (VNĐ)</label><input id="fAmount" type="number" min="0" step="1" placeholder="0"><label>Ghi chú</label><textarea id="fNote" rows="2"></textarea>${type==='purchase'?'<label>Số lượng nhập</label><input id="fQty" type="number" min="0" step="1" value="1"><label>Mã sản phẩm (nếu đã tạo)</label><input id="fCode" placeholder="Mã SKU">':''}`;
+document.getElementById('modal').classList.add('open')}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+function saveForm(){let amount=Number(document.getElementById('fAmount').value);if(!(amount>0)){alert('Vui lòng nhập số tiền lớn hơn 0');return}let t={id:Date.now(),type:currentType,date:document.getElementById('fDate').value,category:document.getElementById('fCat').value,title:document.getElementById('fTitle').value||document.getElementById('fCat').value,amount,note:document.getElementById('fNote').value};
+if(currentType==='purchase'){t.qty=Number(document.getElementById('fQty').value||1);t.code=document.getElementById('fCode').value;let p=data.products.find(x=>x.code===t.code&&t.code);if(p){p.qty+=t.qty;p.cost=amount/t.qty}else{data.products.push({name:t.title,code:t.code,qty:t.qty,cost:amount/t.qty})}}
+data.transactions.push(t);save();closeModal();render();alert('Đã lưu giao dịch')}
+function openProductForm(){document.getElementById('formTitle').textContent='Thêm sản phẩm';document.getElementById('formBody').innerHTML='<label>Tên sản phẩm</label><input id="pName"><label>Mã sản phẩm</label><input id="pCode"><label>Số lượng tồn ban đầu</label><input id="pQty" type="number" min="0" value="0"><label>Giá vốn đơn vị (VNĐ)</label><input id="pCost" type="number" min="0" value="0">';document.querySelector('#modal .sheet .btn').onclick=saveProduct;document.getElementById('modal').classList.add('open')}
+function saveProduct(){let name=document.getElementById('pName').value.trim();if(!name){alert('Nhập tên sản phẩm');return}data.products.push({name,code:document.getElementById('pCode').value,qty:Number(document.getElementById('pQty').value||0),cost:Number(document.getElementById('pCost').value||0)});save();document.querySelector('#modal .sheet .btn').onclick=saveForm;closeModal();render();alert('Đã thêm sản phẩm')}
+function backup(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sao_luu_ke_toan.json';a.click();URL.revokeObjectURL(a.href)}
+function restore(){let f=document.getElementById('restoreFile').files[0];if(!f){alert('Chọn tệp JSON');return}let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d.transactions)||!Array.isArray(d.products))throw Error();data=d;save();render();alert('Khôi phục thành công')}catch(e){alert('Tệp sao lưu không hợp lệ')}};r.readAsText(f)}
+function clearData(){if(confirm('Xóa toàn bộ giao dịch và sản phẩm trên thiết bị này?')){data={transactions:[],products:[]};save();render()}}
+function exportCSV(){let rows=[['Ngày','Loại','Danh mục','Nội dung','Số tiền','Số lượng','Ghi chú'],...data.transactions.map(t=>[t.date,t.type,t.category,t.title,t.amount,t.qty||'',t.note||''])];let csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');let blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='bao_cao_ke_toan.csv';a.click()}
+document.getElementById('txnFilter').onchange=render;
+monthChoices();render();
+</script>
+<script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(()=>{})); }</script>
+</body></html>
